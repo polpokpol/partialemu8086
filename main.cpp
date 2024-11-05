@@ -92,7 +92,7 @@ int main(int argc, char **argv)
     // nmemonics(Operation::OP_MOV, extractor(champiHex[0]));
     // std::cout << result << std::endl;
     // std::cout << (0b00000010 & champiHex[0]) << std::endl;
-    // std::cout << "test: " << (op0.wide) << std::endl;
+    std::cout << "test: " << (op0.wide) << std::endl;
     return 0;
 
 }
