@@ -70,7 +70,9 @@ void extractor(u8 input, opcode_dw *instruction) {
 
 int main(int argc, char **argv)
 {
-    u8 champiHex[] = {0b10001001, 0b11011001, 0b10001001, 0b11011001, 0b10001001, 0b11011001};
+    u8 champiHex[] = {0b10001001, 0b11011001, 0x88, 0xe5,
+    0x89, 0xda, 0x89, 0xde, 0x89, 0xfb, 0x88, 0xc8, 0x88, 0xed, 0x89, 0xc3,
+        0x89, 0xf3, 0x89, 0xfc, 0x89, 0xc5 }; // temporary
     string result = "";
     int i = 0;
     while(i < ArrayCount(champiHex))
