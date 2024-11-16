@@ -5,7 +5,13 @@
 #include "nmemonics.h"
 
 std::unordered_map<int, std::string> nmemonics::umap = {
-    {0b100010, "mov"}
+    {0b100010, "mov"}, // Register/memory to/from register
+    {0b1100011, "mov"},// immediate to register/memory
+    {0b1011, "mov"}, // immediate to register
+    {0b1010000, "mov"}, // memory to accumulator
+    {0b1010001, "mov"}, // accumulator to memory
+    {0b10001110, "mov"}, // Register/memory to segment register
+    {0b10001100, "mov"}// Segmenet register to register/memory
 };
 
 std::unordered_map<int, std::string> nmemonics::umap11_not_wide = {
