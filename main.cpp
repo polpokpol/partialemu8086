@@ -24,6 +24,7 @@ typedef long long s64;
 
 struct left_encoding {
     string nmemonic;
+    u8 nmemonic_number;
     bool destination;
     bool wide;
 };
@@ -38,12 +39,14 @@ void left_encoding_extractor(u8 input, left_encoding *instruction) {
     switch (input) {
         case 0b100010: {
             instruction->nmemonic = nmemonics::umap.at(input);
+            instruction->nmemonic_number = input;
             instruction->destination = (0b00000010 & input) << 1;
             instruction->wide = (0b00000001 & input);
         } break;
         case 0b1011: {
             instruction->nmemonic = nmemonics::umap.at(input);
-            instruction->destination = 1; // always
+            instruction->nmemonic_number = input;
+            instruction->destination = true; // always 1 or true
             instruction->wide = (0b00001 & input) << 3;
         } break;
         default: break;
@@ -51,27 +54,48 @@ void left_encoding_extractor(u8 input, left_encoding *instruction) {
     };
 }
 
-// fix left_enocoding 0b1011
+// per nmenemonic_number add another switch of reg r/m field
 string right_encoding(u8 input, left_encoding *instruction) {
-    u8 input_mod = (0b11000000 & input); // not yet implemented
-    u8 input_reg = (0b00111000 & input) >> 3;
-    u8 input_rm = (0b00000111 & input);
-    string s_reg = "";
-    string s_rm = "";
+    switch (instruction->nmemonic_number) {
+        case 0b100010: {
+            u8 input_mod = (0b11000000 & input) >> 6; // not yet implemented
+            u8 input_reg = (0b00111000 & input) >> 3;
+            u8 input_rm = (0b00000111 & input);
+            string s_reg = "";
+            string s_rm = "";
+            switch (input_mod) {
+                case 0b11: {
+                    if (instruction->wide == true) {
+                        s_reg += nmemonics::umap11_wide.at(input_reg);
+                        s_rm += nmemonics::umap11_wide.at(input_rm);
+                    }else {
+                        s_reg += nmemonics::umap11_not_wide.at(input_reg);
+                        s_rm += nmemonics::umap11_not_wide.at(input_rm);
+                    }
+                    // ----
+                    if (instruction->destination == true) {
+                        return s_reg + ", " + s_rm;
+                    }
+                    return s_rm + ", " + s_reg;
+                } break;
+                case 0b10: {
 
-    // input mod, soon
-    if (instruction->wide == true) {
-        s_reg += nmemonics::umap11_wide.at(input_reg);
-        s_rm += nmemonics::umap11_wide.at(input_rm);
-    }else {
-        s_reg += nmemonics::umap11_not_wide.at(input_reg);
-        s_rm += nmemonics::umap11_not_wide.at(input_rm);
-    }
-    // ----
-    if (instruction->destination == true) {
-        return s_reg + " " + s_rm;
-    }
-    return s_rm + ", " + s_reg;
+                } break;
+                case 0b01: {
+
+                } break;
+                default: {
+
+                } break;
+            }
+        } break;
+        case 0b1011: {
+
+        } break;
+        default: break;
+
+    };
+
 
 }
 
@@ -96,7 +120,7 @@ int main(int argc, char **argv)
     // while(i < ArrayCount(champiHex))
     // {
     //     left_encoding op0;
-    //     extractor(champiHex[i], &op0);
+    //     left_encoding_extractor(champiHex[i], &op0);
     //     string sub_result = op0.nmemonic + " ";
     //     string temp = right_encoding(champiHex[i + 1], &op0);
     //     sub_result = sub_result + temp;
