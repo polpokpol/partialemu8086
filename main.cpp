@@ -22,23 +22,17 @@ typedef long long s64;
 
 
 
-struct left_encoding {
-    string nmemonic;
-    u8 nmemonic_number;
-    bool destination;
-    bool wide;
-};
-
-void left_encoding_extractor(u8 input, left_encoding *instruction) {
+string left_encoding_extractor(u8 input) {
     for (int i = 0; i < 8; ++i) {
         if(nmemonics::umap.count(input)) {
             break;
         }
         input = input >> 1;
     }
+    string result = "";
     switch (input) {
         case 0b100010: {
-            instruction->nmemonic = nmemonics::umap.at(input);
+            result += nmemonics::umap.at(input) + " ";
             instruction->nmemonic_number = input;
             instruction->destination = (0b00000010 & input) << 1;
             instruction->wide = (0b00000001 & input);
@@ -55,9 +49,21 @@ void left_encoding_extractor(u8 input, left_encoding *instruction) {
 }
 
 // per nmenemonic_number add another switch of reg r/m field
-string right_encoding(u8 input, left_encoding *instruction) {
-    switch (instruction->nmemonic_number) {
+string left_and_right_encoding(u8 *champiArray, u8 index) {
+    u8 input = champiArray[index];
+    for (int i = 0; i < 8; ++i) {
+        if(nmemonics::umap.count(input)) {
+            break;
+        }
+        input = input >> 1;
+    }
+    switch (input) {
         case 0b100010: {
+            // left encoding
+            bool destination = (0b00000010 & input) << 1;
+            bool wide = (0b00000001 & input);
+
+            // right encoding
             u8 input_mod = (0b11000000 & input) >> 6; // not yet implemented
             u8 input_reg = (0b00111000 & input) >> 3;
             u8 input_rm = (0b00000111 & input);
@@ -65,7 +71,7 @@ string right_encoding(u8 input, left_encoding *instruction) {
             string s_rm = "";
             switch (input_mod) {
                 case 0b11: {
-                    if (instruction->wide == true) {
+                    if (instruction->wide) {
                         s_reg += nmemonics::umap11_wide.at(input_reg);
                         s_rm += nmemonics::umap11_wide.at(input_rm);
                     }else {
@@ -90,7 +96,11 @@ string right_encoding(u8 input, left_encoding *instruction) {
             }
         } break;
         case 0b1011: {
-
+            // if(instruction->wide) { } // not yet implemented. // we need an array of input
+            string data = std::to_string(input);
+            u8 input_reg = (0b00111000 & input) >> 3;
+            string s_reg = "";
+            return data;
         } break;
         default: break;
 
@@ -115,24 +125,23 @@ int main(int argc, char **argv)
 
     u8 champiHex[] = {0b10110001, 0b1100,};
 
-    // string result = "";
-    // int i = 0;
-    // while(i < ArrayCount(champiHex))
-    // {
-    //     left_encoding op0;
-    //     left_encoding_extractor(champiHex[i], &op0);
-    //     string sub_result = op0.nmemonic + " ";
-    //     string temp = right_encoding(champiHex[i + 1], &op0);
-    //     sub_result = sub_result + temp;
-    //     result = result + sub_result + "\n";
-    //     i+=2; // temporary as it depends
-    // }
-    // std::cout << result << std::endl;
+    string result = "";
+    int i = 0;
+    while(i < ArrayCount(champiHex))
+    {
+        // string left_sub_result =  left_encoding_extractor(champiHex[i]);
+        // string sub_result = op0.nmemonic + " ";
+        string temp = right_encoding(&champiHex, i);
+        sub_result = sub_result + temp;
+        result = result + sub_result + "\n";
+        i+=2; // temporary as it depends
+    }
+    std::cout << result << std::endl;
     // for(int i = 0; i < ArrayCount(champiHex); i++) {
     //     // cout << champiHex[i] << " ";
     //     printf("%d ", champiHex[i]);
     // }
-    printf("champiHex: %d\n\n", champiHex[1]);
+    // printf("champiHex: %d\n\n", champiHex[1]);
     // for loop reversed test
     // u8 a = 0b11111111;
     // for (int i = 0; i < 8; ++i) {
