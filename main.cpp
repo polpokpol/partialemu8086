@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include "nmemonics.h"
 #include <format>
+#include <bitset>
 
 using std::string;
 using std::cout;
@@ -22,34 +23,12 @@ typedef long long s64;
 
 
 
-string left_encoding_extractor(u8 input) {
-    for (int i = 0; i < 8; ++i) {
-        if(nmemonics::umap.count(input)) {
-            break;
-        }
-        input = input >> 1;
-    }
-    string result = "";
-    switch (input) {
-        case 0b100010: {
-            result += nmemonics::umap.at(input) + " ";
-            instruction->nmemonic_number = input;
-            instruction->destination = (0b00000010 & input) << 1;
-            instruction->wide = (0b00000001 & input);
-        } break;
-        case 0b1011: {
-            instruction->nmemonic = nmemonics::umap.at(input);
-            instruction->nmemonic_number = input;
-            instruction->destination = true; // always 1 or true
-            instruction->wide = (0b00001 & input) << 3;
-        } break;
-        default: break;
 
-    };
-}
 
 // per nmenemonic_number add another switch of reg r/m field
-string left_and_right_encoding(u8 *champiArray, u8 index) {
+string left_and_right_encoding(u8 champiArray[], u8 index)
+{
+    // put it in a function
     u8 input = champiArray[index];
     for (int i = 0; i < 8; ++i) {
         if(nmemonics::umap.count(input)) {
@@ -57,21 +36,23 @@ string left_and_right_encoding(u8 *champiArray, u8 index) {
         }
         input = input >> 1;
     }
+    // put it in a function
     switch (input) {
         case 0b100010: {
             // left encoding
-            bool destination = (0b00000010 & input) << 1;
-            bool wide = (0b00000001 & input);
+            bool destination = (0b00000010 & champiArray[index]) << 1;
+            bool wide = (0b00000001 & champiArray[index]);
 
             // right encoding
-            u8 input_mod = (0b11000000 & input) >> 6; // not yet implemented
-            u8 input_reg = (0b00111000 & input) >> 3;
-            u8 input_rm = (0b00000111 & input);
+            u8 input2 = champiArray[index + 1];
+            u8 input_mod = (0b11000000 & input2) >> 6; // not yet implemented
+            u8 input_reg = (0b00111000 & input2) >> 3;
+            u8 input_rm = (0b00000111 & input2);
             string s_reg = "";
             string s_rm = "";
             switch (input_mod) {
                 case 0b11: {
-                    if (instruction->wide) {
+                    if (wide) {
                         s_reg += nmemonics::umap11_wide.at(input_reg);
                         s_rm += nmemonics::umap11_wide.at(input_rm);
                     }else {
@@ -79,10 +60,10 @@ string left_and_right_encoding(u8 *champiArray, u8 index) {
                         s_rm += nmemonics::umap11_not_wide.at(input_rm);
                     }
                     // ----
-                    if (instruction->destination == true) {
-                        return s_reg + ", " + s_rm;
+                    if (destination) {
+                        return nmemonics::umap.at(input) + " " + s_reg + ", " + s_rm;
                     }
-                    return s_rm + ", " + s_reg;
+                    return nmemonics::umap.at(input) + " " + s_rm + ", " + s_reg;
                 } break;
                 case 0b10: {
 
@@ -96,11 +77,20 @@ string left_and_right_encoding(u8 *champiArray, u8 index) {
             }
         } break;
         case 0b1011: {
-            // if(instruction->wide) { } // not yet implemented. // we need an array of input
-            string data = std::to_string(input);
-            u8 input_reg = (0b00111000 & input) >> 3;
+            bool wide = (champiArray[index] & 0b00001000) >> 3;
+            u8 input_reg = (champiArray[index] & 0b00000111);
+            string data = "";
             string s_reg = "";
-            return data;
+            if(wide) {
+                s_reg += nmemonics::umap11_wide.at(input_reg);
+                // wide data
+                u16 the_data = (champiArray[index+2] << 8) + champiArray[index + 1];
+                data += std::to_string(the_data);
+                return  nmemonics::umap.at(input) + " " + s_reg + ", " + data;
+            }
+            s_reg += nmemonics::umap11_not_wide.at(input_reg);
+            data += std::to_string(champiArray[index+1]);
+            return  nmemonics::umap.at(input) + " " + s_reg + ", " + data;
         } break;
         default: break;
 
@@ -123,32 +113,26 @@ int main(int argc, char **argv)
     //     0b10011, 0b10001001, 0b1001, 0b10001000, 0b1010, 0b10001000, 0b1101110, 0b0
     // }; // temporary2, we will use external file later
 
-    u8 champiHex[] = {0b10110001, 0b1100,};
+    u8 champiHex[] = {0b10001001, 0b11011110, 0b10001000, 0b11000110, 0b10110001, 0b1100,};
 
     string result = "";
     int i = 0;
     while(i < ArrayCount(champiHex))
     {
-        // string left_sub_result =  left_encoding_extractor(champiHex[i]);
-        // string sub_result = op0.nmemonic + " ";
-        string temp = right_encoding(&champiHex, i);
-        sub_result = sub_result + temp;
-        result = result + sub_result + "\n";
+        result = left_and_right_encoding(champiHex, i);
         i+=2; // temporary as it depends
+        std::cout << result << std::endl;
     }
-    std::cout << result << std::endl;
-    // for(int i = 0; i < ArrayCount(champiHex); i++) {
-    //     // cout << champiHex[i] << " ";
-    //     printf("%d ", champiHex[i]);
-    // }
-    // printf("champiHex: %d\n\n", champiHex[1]);
-    // for loop reversed test
-    // u8 a = 0b11111111;
-    // for (int i = 0; i < 8; ++i) {
-    //     a = a >> 1;
-    //     printf("champiHex: %d\n", a);
-    // }
-    // printf("lati: %d", nmemonics::umap.count(0b100010));
+
+    // string toli = "lala ";
+    // toli = toli + std::to_string(10);
+    // printf("lati: %d\n", nmemonics::umap.count(0b100010));
+    // printf("champiHex: %d\n", champiHex[1]);
+    // u8 chapli0 = 0b01;
+    // u8 chapli1 = 0b10;
+    // u16 latlat = chapli0 << 8;
+    // latlat += chapli1;
+    // cout << std::bitset<16>(latlat) << endl;
 
     return 0;
 
