@@ -113,7 +113,7 @@ int main(int argc, char **argv)
     //     0b10011, 0b10001001, 0b1001, 0b10001000, 0b1010, 0b10001000, 0b1101110, 0b0
     // }; // temporary2, we will use external file later
 
-    u8 champiHex[] = {0b10001001, 0b11011110, 0b10001000, 0b11000110, 0b10110001, 0b1100,};
+    u8 champiHex[] = {0b10001001, 0b11011110, 0b10001000, 0b11000110, 0b10110001, 0b1100, 0xb5, 0xf4, 0xb9, 0x0c};
 
     string result = "";
     int i = 0;
