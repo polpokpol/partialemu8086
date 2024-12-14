@@ -26,10 +26,11 @@ typedef long long s64;
 
 
 // per nmenemonic_number add another switch of reg r/m field
-string left_and_right_encoding(u8 champiArray[], u8 index)
+string left_and_right_encoding(u8 champiArray[], u8 counter[])
 {
+    u16 index = u16(counter[0]);
     // put it in a function
-    u8 input = champiArray[index];
+    u8 input = 0 + champiArray[index];
     for (int i = 0; i < 8; ++i) {
         if(nmemonics::umap.count(input)) {
             break;
@@ -86,6 +87,7 @@ string left_and_right_encoding(u8 champiArray[], u8 index)
                 // wide data
                 u16 the_data = (champiArray[index+2] << 8) + champiArray[index + 1];
                 data += std::to_string(the_data);
+                counter[0]+=1;
                 return  nmemonics::umap.at(input) + " " + s_reg + ", " + data;
             }
             s_reg += nmemonics::umap11_not_wide.at(input_reg);
@@ -102,10 +104,6 @@ string left_and_right_encoding(u8 champiArray[], u8 index)
 
 int main(int argc, char **argv)
 {
-    // u8 champiHex[] = {0b10001001, 0b11011001, 0x88, 0xe5,
-    // 0x89, 0xda, 0x89, 0xde, 0x89, 0xfb, 0x88, 0xc8, 0x88, 0xed, 0x89, 0xc3,
-    //     0x89, 0xf3, 0x89, 0xfc, 0x89, 0xc5 }; // temporary
-
     // u8 champiHex[] = {0b10001001, 0b11011110, 0b10001000, 0b11000110, 0b10110001, 0b1100, 0b10110101,
     //     0b11110100, 0b10111001, 0b1100, 0b0, 0b10111001, 0b11110100, 0b11111111, 0b10111010,
     //     0b1101100, 0b1111, 0b10111010, 0b10010100, 0b11110000, 0b10001010, 0b0, 0b10001011, 0b11011,
@@ -113,14 +111,16 @@ int main(int argc, char **argv)
     //     0b10011, 0b10001001, 0b1001, 0b10001000, 0b1010, 0b10001000, 0b1101110, 0b0
     // }; // temporary2, we will use external file later
 
-    u8 champiHex[] = {0b10001001, 0b11011110, 0b10001000, 0b11000110, 0b10110001, 0b1100, 0xb5, 0xf4, 0xb9, 0x0c};
+    u8 champiHex[] = {0b10001001, 0b11011110, 0b10001000, 0b11000110, 0b10110001, 0b1100, 0xb5, 0xf4, 0xb9, 0x0c, 0x0,
+    0b10111001, 0b11110100, 0b11111111, 0b10111010, 0b01101100, 0b1111, 0xba, 0x94, 0xf0};
+    // u8 champiHex[] = {0b10111010, 0b01101100, 0b1111};
 
     string result = "";
-    int i = 0;
-    while(i < ArrayCount(champiHex))
+    u8 kopal[] = {0}; // it is an array as we will store many more later here
+    while(kopal[0] < ArrayCount(champiHex))
     {
-        result = left_and_right_encoding(champiHex, i);
-        i+=2; // temporary as it depends
+        result = left_and_right_encoding(champiHex, kopal);
+        kopal[0]+=2;
         std::cout << result << std::endl;
     }
 
@@ -133,6 +133,7 @@ int main(int argc, char **argv)
     // u16 latlat = chapli0 << 8;
     // latlat += chapli1;
     // cout << std::bitset<16>(latlat) << endl;
+    
 
     return 0;
 
