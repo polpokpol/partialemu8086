@@ -18,6 +18,12 @@ struct nmemonics {
     static std::unordered_map<int, std::string> umap11_wide;
     //
 
+    // modfield name 0b00, 0b01, 0b10. All of them except 0b11
+    // 0b11 is register/register, the rest with exception: is register/memory
+    // static std::unordered_map<int, std::string> umap00_not_wide; i dont think there is not wide
+    static std::unordered_map<int, std::string> umap_rm_wide;
+    //
+
 };
 
 
