@@ -1,3 +1,4 @@
+#include <cstddef>
 #include <iostream>
 #include <string>
 #include <stdio.h>
@@ -22,7 +23,18 @@ typedef long long s64;
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 
 
+// temporary as we will have u16 and negative later
+string _transform_int_to_string(u8 data0, u8 data1 = 0)
+{   
+    string result = "";
+    result += std::to_string(data0);
+    return result;
+}
 
+string _bracketer(string data_string){
+    data_string = "[" + data_string +']';
+    return data_string;
+}
 
 
 // per nmenemonic_number add another switch of reg r/m field
@@ -74,13 +86,16 @@ string left_and_right_encoding(u8 champiArray[], u8 counter[])
                     counter[1] = 3; // this is for debug only cause i did not configure vscode debug yet
                     if(wide){
                         s_reg += nmemonics::umap11_wide.at(input_reg); 
-                        counter[0] +=1;
+                        // counter[0] +=1;
                     }else{
                         s_reg += nmemonics::umap11_not_wide.at(input_reg);
                     }
+                    counter[0] +=1;
+                    string stringified_integer_data = _transform_int_to_string(champiArray[index + 3]);
                     s_rm += nmemonics::umap_rm_wide.at(input_rm);
                     if (destination) {
-                        return nmemonics::umap.at(input) + " " + s_reg + ", " + s_rm;
+                        // nmemonics::umap.at(input) + " " + s_reg + ", " + s_rm + " + " + stringified_integer_data
+                        return nmemonics::umap.at(input) + " " + s_reg + ", " + _bracketer((s_rm + " + " + stringified_integer_data));
                     }
                     return nmemonics::umap.at(input) + " " + s_rm + ", " + s_reg;
                 } break;
@@ -135,8 +150,9 @@ int main(int argc, char **argv)
     // }; // temporary2, we will use external file later
 
     // u8 champiHex[] = {0b10001001, 0b11011110, 0b10001000, 0b11000110, 0b10110001, 0b1100, 0xb5, 0xf4, 0xb9, 0x0c, 0x0,
-    // 0b10111001, 0b11110100, 0b11111111, 0b10111010, 0b01101100, 0b1111, 0xba, 0x94, 0xf0, 0x8a, 0b0, 0x8b, 0x1b};
-    u8 champiHex[] = {0x8b, 0x56, 0x00};
+    // 0b10111001, 0b11110100, 0b11111111, 0b10111010, 0b01101100, 0b1111, 0xba, 0x94, 0xf0, 0x8a, 0b0, 0x8b, 0x1b,
+    // 0x8b, 0x56, 0x00};
+    u8 champiHex[] = {0b10001010, 0b01100000, 0b00000100};
 
     string result = "";
     u8 kopal[] = {0, 0}; // it is an array as we will store many more later here
@@ -147,6 +163,7 @@ int main(int argc, char **argv)
         std::cout << result << std::endl;
     }
     printf("lalala: %d\n", kopal[0]);
+    cout << _transform_int_to_string(20) << "  asdasda" << endl;
 
     // string toli = "lala ";
     // toli = toli + std::to_string(10);
