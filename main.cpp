@@ -89,14 +89,13 @@ string left_and_right_encoding(u8 champiArray[], u8 counter[])
                     if( champiArray[index + 2] != 0){
                         u16 the_0b10_integer_summation = (champiArray[index + 3] << 8) ^ champiArray[index + 2];
                         stringified_integer_data = " + " +  _transform_int_to_string(the_0b10_integer_summation);
-                        printf("ASDasd %d\n", the_0b10_integer_summation);
                     }
 
                     s_rm += nmemonics::umap_rm_wide.at(input_rm);
                     if (destination) {
                         return nmemonics::umap.at(input) + " " + s_reg + ", " + _bracketer((s_rm +  stringified_integer_data));
                     }
-                    return nmemonics::umap.at(input) + " " + s_rm + ", " + s_reg;
+                    return nmemonics::umap.at(input) + " " + _bracketer((s_rm +  stringified_integer_data)) + ", " + s_reg;
                 } break;
                 // ------------------
                 case 0b01: {
@@ -110,7 +109,7 @@ string left_and_right_encoding(u8 champiArray[], u8 counter[])
                     }
                     counter[0] +=1;
                     string stringified_integer_data = "";
-                    if( champiArray[index + 2] != 0){
+                    if( champiArray[index + 2] != 0){ // CHECK IF RAW INT IS ZERO
                         stringified_integer_data = " + " +  _transform_int_to_string(champiArray[index + 2]);
                     }
 
@@ -120,7 +119,8 @@ string left_and_right_encoding(u8 champiArray[], u8 counter[])
                         // counter[1] = 122;
                         return nmemonics::umap.at(input) + " " + s_reg + ", " + _bracketer((s_rm +  stringified_integer_data));
                     }
-                    return nmemonics::umap.at(input) + " " + s_rm + ", " + s_reg;
+                    // return nmemonics::umap.at(input) + " " + s_rm + ", " + s_reg;
+                    return nmemonics::umap.at(input) + " " + _bracketer((s_rm +  stringified_integer_data)) + ", " + s_reg;
                 } break;
                 //------------------------
                 default: {
@@ -131,14 +131,17 @@ string left_and_right_encoding(u8 champiArray[], u8 counter[])
                         s_reg += nmemonics::umap11_not_wide.at(input_reg);
                     }
                     s_rm += nmemonics::umap_rm_wide.at(input_rm);
+
+                    string nmemonics_result = nmemonics::umap.at(input) + " ";
+                    string s_reg_result = s_reg + " ";
+                    string s_rm_result = s_rm;// we may add if needed later
+                    string result_0b00 = "";
                     if (destination) {
-                        string nmemonics_result = nmemonics::umap.at(input) + " ";
-                        string s_reg_result = s_reg + ", ";
-                        string s_rm_result = s_rm;// we may add if needed later
-                        string result_0b00 = nmemonics_result + s_reg_result + _bracketer( s_rm_result);
+                        result_0b00 = nmemonics_result + s_reg_result + "," + _bracketer( s_rm_result);
                         return result_0b00;
                     }
-                    return nmemonics::umap.at(input) + " " + s_rm + ", " + s_reg;
+                    result_0b00 = nmemonics_result + _bracketer( s_rm_result) + ", " + s_reg_result;
+                    return result_0b00;
                 } break;
             }
         } break;
@@ -176,11 +179,12 @@ int main(int argc, char **argv)
     //     0b10011, 0b10001001, 0b1001, 0b10001000, 0b1010, 0b10001000, 0b1101110, 0b0
     // }; // temporary2, we will use external file later
 
-    u8 champiHex[] = {0b10001001, 0b11011110, 0b10001000, 0b11000110, 0b10110001, 0b1100, 0xb5, 0xf4, 0xb9, 0x0c, 0x0,
+    u8 champiHex[] = {0b10001001, 0b11011110,0b10001000,0b11000110,0b10110001, 0b1100, 0xb5, 0xf4, 0xb9, 0x0c, 0x0,
     0b10111001, 0b11110100, 0b11111111, 0b10111010, 0b01101100, 0b1111, 0xba, 0x94, 0xf0, 0x8a, 0b0, 0x8b, 0x1b,
-    0x8b, 0x56, 0x00, 0x8a, 0x60, 0x04, 0x8a, 0x80, 0x87, 0x13 };
-    // u8 champiHex[] = {0b10001010, 0b10000000, 0b10000111, 0b00010011 };
-    // u8 champiHex[] = {0b10001011, 0b01010110, 0b0};
+    0x8b, 0x56, 0x00, 0x8a,0x60,0x04,0x8a,0x80,0x87,0x13, 0x88, 0x6e, 0x00, 0x8b, 0x41, 0xdb,0x89,0x8c,0xd4,0xfe,
+    0x8b,0x57,0xe0  };
+    // u8 champiHex[] = {0b10001001, 0b10001100, 0b11010100, 0b11111110};
+    // u8 champiHex[] = {0b10001011, 0b01000001, 0b11011011};
 
     string result = "";
     u8 kopal[] = {0, 0}; // it is an array as we will store many more later here
@@ -195,17 +199,6 @@ int main(int argc, char **argv)
     printf("lalala counter1: %d\n", kopal[1]);
     u16 asdasd = (0b00010011 << 8) ^ 0b10000111;
     printf("%d\n", asdasd);
-    // cout << _transform_int_to_string(20) << "  asdasda" << endl;
-
-    // string toli = "lala ";
-    // toli = toli + std::to_string(10);
-    // printf("lati: %d\n", nmemonics::umap.count(0b100010));
-    // printf("champiHex: %d\n", champiHex[1]);
-    // u8 chapli0 = 0b01;
-    // u8 chapli1 = 0b10;
-    // u16 latlat = chapli0 << 8;
-    // latlat += chapli1;
-    // cout << std::bitset<16>(latlat) << endl;
     
 
     return 0;
