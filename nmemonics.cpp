@@ -11,7 +11,9 @@ std::unordered_map<int, std::string> nmemonics::umap = {
     {0b1010000, "mov"}, // memory to accumulator
     {0b1010001, "mov"}, // accumulator to memory
     {0b10001110, "mov"}, // Register/memory to segment register
-    {0b10001100, "mov"}// Segmenet register to register/memory
+    {0b10001100, "mov"},// Segmenet register to register/memory
+    // ----------------------------------------------------------------//
+    {0b0, "add"}
 };
 
 std::unordered_map<int, std::string> nmemonics::umap11_not_wide = {
