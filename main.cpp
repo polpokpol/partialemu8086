@@ -23,6 +23,14 @@ typedef long long s64;
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 
 string byte_or_word(bool wide){if(wide){return "word";} return "byte";}
+string _nmemonics_result_get(u8 input, u8 input_modifier=256){
+    string result = nmemonics::umap.at(input) + " ";
+    if(input_modifier == 0b101){
+        string result = nmemonics::umap.at(0b001010) + " ";
+        return result;
+    }
+    return result;
+}
 
 // temporary as we will have u16 and negative later
 string _transform_int_to_string(u16 data0, u16 data1 = 0)
@@ -336,8 +344,10 @@ string left_and_right_encoding(u8 champiArray[], u8 counter[])
 
             // right encoding
             u8 input2 = champiArray[index + 1];
+            u8 input_modifier = (0b00111000 & input2) >> 3; // not reg. this is for add, sub and others
             u8 input_mod = (0b11000000 & input2) >> 6; // not yet implemented
             u8 input_rm = (0b00000111 & input2);
+            string nmemonics_result = _nmemonics_result_get(input, input_modifier);
             string s_reg = "";
             string s_rm = "";
             switch (input_mod) {
@@ -347,7 +357,6 @@ string left_and_right_encoding(u8 champiArray[], u8 counter[])
                     stringified_integer_data0 = _transform_int_to_string(integer_summation);
                     s_rm += nmemonics::umap11_wide.at(input_rm) + ", " + stringified_integer_data0;
 
-                    string nmemonics_result = nmemonics::umap.at(input) + " "; // correct
                     string s_rm_result = s_rm;// we may add if needed later
                     string result_0b00 = "";
                     result_0b00 = nmemonics_result + s_rm_result;
@@ -377,7 +386,6 @@ string left_and_right_encoding(u8 champiArray[], u8 counter[])
 
                     s_rm += nmemonics::umap_rm_wide.at(input_rm) + " + " + stringified_integer_data0;
 
-                    string nmemonics_result = nmemonics::umap.at(input) + " ";
                     string s_rm_result = s_rm;// we may add if needed later
                     string result_0b00 = "";
                     result_0b00 = nmemonics_result + "word " +_bracketer( s_rm_result)  + ", " + stringified_integer_data1;
@@ -385,6 +393,11 @@ string left_and_right_encoding(u8 champiArray[], u8 counter[])
                 }break;
                 default: {
                     string stringified_integer_data = "";
+                    // temp solution for wides because i got confused in double wide
+                    if(destination == false && wide){
+                        wide = true;
+                    }else{wide=false;}
+                    // temp solution for wides because i got confused in double wide
                     if(wide){
                         u16 integer_summation = (champiArray[index + 3] << 8) ^ champiArray[index + 2];
                         stringified_integer_data = "word " + _transform_int_to_string(integer_summation);
@@ -396,7 +409,6 @@ string left_and_right_encoding(u8 champiArray[], u8 counter[])
 
                     s_rm += nmemonics::umap_rm_wide.at(input_rm);
 
-                    string nmemonics_result = nmemonics::umap.at(input) + " ";
                     string s_rm_result = s_rm;// we may add if needed later
                     string result_0b00 = "";
 
@@ -411,6 +423,88 @@ string left_and_right_encoding(u8 champiArray[], u8 counter[])
             }
         }break;
         case 0b0000010: {
+            bool wide = (0b00000001 & champiArray[index]);
+            string stringified_integer_data = "";
+            string result_string = nmemonics::umap.at(input) + " ";
+            if(wide){
+                counter[0] +=1;
+                u16 integer_summation = (champiArray[index + 2] << 8) ^ champiArray[index + 1];
+                stringified_integer_data = _transform_int_to_string(integer_summation);
+                result_string += (nmemonics::umap11_wide.at(000) + ", " + stringified_integer_data);
+                return result_string;
+            }
+            u8 integer_summation = champiArray[index + 1];
+            stringified_integer_data = _transform_int_to_string(integer_summation);
+            result_string += (nmemonics::umap11_not_wide.at(000) + ", " + stringified_integer_data);
+            return result_string;
+        }break;
+        case 0b001010: {
+            bool destination = (0b00000010 & champiArray[index]) << 1;
+            bool wide = (0b00000001 & champiArray[index]);
+            // right encoding
+            u8 input2 = champiArray[index + 1];
+            u8 input_mod = (0b11000000 & input2) >> 6; // not yet implemented
+            u8 input_reg = (0b00111000 & input2) >> 3;
+            u8 input_rm = (0b00000111 & input2);
+            string s_reg = "";
+            string s_rm = "";
+            switch (input_mod) {
+                case 0b11: {
+                    if (wide) {
+                        s_reg += nmemonics::umap11_wide.at(input_reg);
+                        s_rm += nmemonics::umap11_wide.at(input_rm);
+                    }else {
+                        s_reg += nmemonics::umap11_not_wide.at(input_reg);
+                        s_rm += nmemonics::umap11_not_wide.at(input_rm);
+                    }
+                    // ----
+                    if (destination) {
+                        return nmemonics::umap.at(input) + " " + s_reg + ", " + s_rm;
+                    }
+                    return nmemonics::umap.at(input) + " " + s_rm + ", " + s_reg;
+                } break;
+                case 0b01: {
+                    // counter[1] = 3; // this is for debug only cause i did not configure vscode debug yet
+                    if(wide){
+                        s_reg += nmemonics::umap11_wide.at(input_reg); 
+                    }else{
+                        s_reg += nmemonics::umap11_not_wide.at(input_reg);
+                    }
+                    string stringified_integer_data = "";
+                    if( champiArray[index + 2] != 0){ // CHECK IF RAW INT IS ZERO
+                        stringified_integer_data = " + " +  _transform_int_to_string(champiArray[index + 2]);
+                    }
+
+                    s_rm += nmemonics::umap_rm_wide.at(input_rm);
+                    counter[0] +=1;
+                    if (destination) {
+                        return nmemonics::umap.at(input) + " " + s_reg + ", " + _bracketer((s_rm +  stringified_integer_data));
+                    }
+                    return nmemonics::umap.at(input)+ " " + byte_or_word(wide) + " " + _bracketer((s_rm +  stringified_integer_data)) + ", " + s_reg;
+                } break;
+                default: {
+                    if(wide){
+                        // reuses umap11. i will change the name later not umap11
+                        s_reg += nmemonics::umap11_wide.at(input_reg); 
+                    }else{
+                        s_reg += nmemonics::umap11_not_wide.at(input_reg);
+                    }
+                    s_rm += nmemonics::umap_rm_wide.at(input_rm);
+                    string nmemonics_result = nmemonics::umap.at(input) + " ";
+                    string s_reg_result = s_reg;
+                    string s_rm_result = s_rm;// we may add if needed later
+                    string result_0b00 = "";
+                    if (destination) {
+                        result_0b00 = nmemonics_result + s_reg_result + ", " + _bracketer( s_rm_result);
+                        return result_0b00;
+                    }
+                    result_0b00 = nmemonics_result + byte_or_word(wide)+ " " + _bracketer( s_rm_result) + ", " + s_reg_result;
+                    return result_0b00;
+                }break;
+                
+            } ;
+        }break;
+        case 0b0010110: {
             bool wide = (0b00000001 & champiArray[index]);
             string stringified_integer_data = "";
             string result_string = nmemonics::umap.at(input) + " ";
@@ -452,9 +546,12 @@ int main(int argc, char **argv)
     0x8b,0x57,0xe0,0xc6,0x03,0x07,0xc7,0x85,0x85,0x03,0x5b,0x01,0b00000011, 0b11000,0x03,0x5e,0x00,0x83,0xc6,0x02,
     0x83,0xc5,0x02,0x83,0xc1,0x08,0x03,0x5e,0x00,0x03,0x4f,0x02,0x02,0x7a,0x04,0x03,0x7b,0x06,0x01,0x18,0x01,0x5e,0x00,
     0x01,0x4f,0x02,0x00,0x7a,0x04,0x01,0x7b,0x06,0x80,0x07,0x22,0x83,0x82,0xe8,0x03,0x1d,0x03,0x46,0x00,0x02,0x00,  
-    0x01,0xd8,0x00,0xe0,0x05,0xe8,0x03,0x04,0xe2,0x04,0x09};
+    0x01,0xd8,0x00,0xe0,0x05,0xe8,0x03,0x04,0xe2,0x04,0x09,0x2b,0x18,0x2b,0x5e,0x00,0x83,0xee,0x02,0x83,0xed,0x02,0x83,
+    0xe9,0x08,0x2b,0x5e,0x00,0x2b,0x4f,0x02,0x2a,0x7a,0x04,0x2b,0x7b,0x06,0x29,0x18,0x29,0x5e,0x00,0x29,0x5e,0x00,0x29,
+    0x4f,0x02,0x28,0x7a,0x04,0x29,0x7b,0x06,0x80,0x2f,0x22,0x83,0x29,0x1d,0x2b,0x46,0x00,0x2a,0x00,0x29,0xd8,0x28,0xe0,
+    0x2d,0xe8,0x03,0x2c,0xe2,0x2c,0x09};
     // u8 champiHex[] = {0b11000111,0b10000101,0x85,0x03,0x5b,0x01};
-    // u8 champiHex[] = {0x05,0xe8,0x03 };
+    // u8 champiHex[] = {0x2d,0xe8,0x03,0x2c,0xe2,0x2c,0x09};
 
     string result = "";
     u8 kopal[] = {0, 0}; // it is an array as we will store many more later here
