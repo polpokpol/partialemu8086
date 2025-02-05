@@ -21,7 +21,8 @@ std::unordered_map<int, std::string> nmemonics::umap = {
     // {0b100000, "sub"},
     {0b0010110, "sub"},
     // ----------------------------------------------------------------//
-    {0b001110, "cmp"}
+    {0b001110, "cmp"},
+    {0b0011110, "cmp"}
 };
 
 std::unordered_map<int, std::string> nmemonics::umap11_not_wide = {
