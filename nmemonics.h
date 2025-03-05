@@ -23,6 +23,7 @@ struct nmemonics {
     // static std::unordered_map<int, std::string> umap00_not_wide; i dont think there is not wide
     static std::unordered_map<int, std::string> umap_rm_wide;
     //
+    static std::unordered_map<std::string, int> grp_map;
 
 };
 

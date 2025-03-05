@@ -62,3 +62,16 @@ std::unordered_map<int, std::string> nmemonics::umap_rm_wide = {
     {0b110, "bp"}, // if mod == 00 it is direct address
     {0b111, "bx"},
 };
+
+
+std::unordered_map<std::string, int> nmemonics::grp_map = {
+    {"ax", 0},
+    {"bx", 1},
+    {"cx", 2},
+    {"dx", 3},
+    // _________________ space for readability
+    {"sp", 4},
+    {"bp", 5},
+    {"si", 6},
+    {"di", 7},
+};
