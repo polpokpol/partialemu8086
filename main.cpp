@@ -23,8 +23,9 @@ typedef long long s64;
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 
 
-enum grp {ax, bx, cx, dx, sp, bp, si, di}; // general purpose registers
-u16 general_purpose_registers[8];
+enum grp {ax, bx, cx, dx, sp, bp, si, di, ip, ss, ds, es, fl}; // general purpose registers
+enum flag_bits {o=4,d=5,i=6,t=7,s=8,z=9,a=11,p=13,c=15};
+u16 general_purpose_registers[16]; // 12 is the flag
 
 string byte_or_word(bool wide){if(wide){return "word";} return "byte";}
 string _nmemonics_result_get(u8 input, u8 input_modifier=256){
@@ -38,6 +39,13 @@ string _nmemonics_result_get(u8 input, u8 input_modifier=256){
         return result;
     }
     return result;
+}
+void flag_bits_flip_s(u8 n=0){
+    if( n == 1 ){ 
+        general_purpose_registers[fl]-=0b10000000;
+        return;
+    }
+    general_purpose_registers[fl]+=128;
 }
 
 // temporary as we will have u16 and negative later
@@ -529,8 +537,18 @@ string left_and_right_encoding(u8 champiArray[], u8 counter[])
                     }
                     // ----
                     if (destination) {
+                        general_purpose_registers[get_grp(s_reg)] -= general_purpose_registers[get_grp(s_rm)];
+                        // if( general_purpose_registers[get_grp(s_reg)] == 0 ){
+                        //     general_purpose_registers[fl]+=0b10000000;
+                        //     // flag_bits_flip_s();
+                        // }
                         return nmemonics::umap.at(input) + " " + s_reg + ", " + s_rm;
                     }
+                    general_purpose_registers[get_grp(s_rm)] -= general_purpose_registers[get_grp(s_reg)];
+                    // if( general_purpose_registers[get_grp(s_rm)] == 0 ){
+                    //     general_purpose_registers[fl]+=0b10000000;
+                    //     // flag_bits_flip_s();
+                    // }
                     return nmemonics::umap.at(input) + " " + s_rm + ", " + s_reg;
                 } break;
                 case 0b01: {
@@ -705,9 +723,9 @@ int main(int argc, char **argv)
     // 0x39,0x5e,0x00,0x39,0x4f,0x02,0x38,0x7a,0x04,0x39,0x7b,0x06,0x80,0x3f,0x22,0x83,0x3e,0xe2,0x12,0x1d,
     // 0x3b,0x46,0x00,0x3a,0x00,0x39,0xd8,0x38,0xe0,0x3d,0xe8,0x03,0x3c,0xe2,0x3c,0x09,0x75,0x02,0x75,0xfc};
     //   0x75,0xfa,0x75,0xfc,0x74,0xfe,0x7c,0xfc,0x7e,0xfa,0x72,0xf8,0x76,0xf6,0x7a,0xf4,0x70,0xf2,0x78,0xf0,0x75,0xee,0x7d,0xec,0x7f,0xea,0x73,0xe8,0x77,0xe6,0x7b,0xe4,0x71,0xe2,0x79,0xe0,0xe2,0xde,0xe1,0xdc,0xe0,0xda,0xe3,0xd8
-    // u8 champiHex[] = {0xba, 0x04, 0x00, 0x89, 0xe2};
-    u8 champiHex[] = { 0xb8, 0x01, 0x00, 0xbb, 0x02, 0x00, 0xb9, 0x03, 0x00, 0xba,
-            0x04, 0x00, 0x89, 0xc4, 0x89, 0xdd, 0x89, 0xce, 0x89, 0xd7, 0x89, 0xe2, 0x89, 0xe9, 0x89, 0xf3, 0x89, 0xf8};
+    u8 champiHex[] = {0xbb,0x03,0xf0,0xb9,0x01,0x0f,0x29, 0xcb };
+    // u8 champiHex[] = { 0xb8, 0x01, 0x00, 0xbb, 0x02, 0x00, 0xb9, 0x03, 0x00, 0xba,
+    //         0x04, 0x00, 0x89, 0xc4, 0x89, 0xdd, 0x89, 0xce, 0x89, 0xd7, 0x89, 0xe2, 0x89, 0xe9, 0x89, 0xf3, 0x89, 0xf8};
 
     string result = "";
     u8 kopal[] = {0, 0}; // it is an array as we will store many more later here
@@ -733,7 +751,12 @@ int main(int argc, char **argv)
         cout << "general_purpose_registers " << general_purpose_registers[tujtuj[0]] << "\n";
         tujtuj[0]+=1;
     }
-    
+    // u16 temp = general_purpose_registers[fl] + 128;
+    // general_purpose_registers[fl] += 128;
+    // general_purpose_registers[fl] = general_purpose_registers[fl]  >> (s-1);
+
+    printf("flag register: %d\n", general_purpose_registers[fl]);
+    // printf("kdsakadskdas: %d", 0b1 << 3);
 
     return 0;
 

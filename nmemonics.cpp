@@ -74,4 +74,10 @@ std::unordered_map<std::string, int> nmemonics::grp_map = {
     {"bp", 5},
     {"si", 6},
     {"di", 7},
+    // // _________________ space for readability
+    {"ip", 8},
+    {"ss", 9},
+    {"ds", 10},
+    {"es", 11},
+    {"fl", 12},
 };
