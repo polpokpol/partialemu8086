@@ -25,10 +25,15 @@ typedef long long s64;
 
 enum grp {ax, bx, cx, dx, sp, bp, si, di, ip, ss, ds, es, fl}; // general purpose registers
 enum flag_bits {o=4,d=5,i=6,t=7,s=8,z=9,a=11,p=13,c=15};
+
+// transfered to maps
+// enum flag_bits_masker {o_masker=0b100000000000,d_masker=0b10000000000,i_masker=0b1000000000,t_masker=0b100000000,s_masker=0b10000000,
+//     z_masker=0b1000000,a_masker=0b10000,p_masker=0b100,c_masker=0b1};
+
 u16 general_purpose_registers[16]; // 12 is the flag
 
 string byte_or_word(bool wide){if(wide){return "word";} return "byte";}
-string _nmemonics_result_get(u8 input, u8 input_modifier=256){
+string _nmemonics_result_get(u8 input, u8 input_modifier=255){
     string result = nmemonics::umap.at(input) + " ";
     if(input_modifier == 0b101){
         string result = nmemonics::umap.at(0b001010) + " ";
@@ -40,12 +45,22 @@ string _nmemonics_result_get(u8 input, u8 input_modifier=256){
     }
     return result;
 }
-void flag_bits_flip_s(u8 n=0){
-    if( n == 1 ){ 
-        general_purpose_registers[fl]-=0b10000000;
+void flag_bits_flip(flag_bits masker, bool already_negative)
+{
+    u16 the_masker = nmemonics::flag_bits_masker.at(masker);
+    u8 shifter = masker - 1;
+    u16 result = (general_purpose_registers[fl] & the_masker) >> shifter;
+
+    // adder
+    if( result == 0 ) {
+        general_purpose_registers[fl]+=the_masker;
         return;
     }
-    general_purpose_registers[fl]+=128;
+    // minuser
+    else if( result != 0 ){
+        general_purpose_registers[fl]-=the_masker;
+        return;
+    }
 }
 
 // temporary as we will have u16 and negative later
@@ -288,6 +303,10 @@ string left_and_right_encoding(u8 champiArray[], u8 counter[])
                 u16 the_data = (champiArray[index+2] << 8) + champiArray[index + 1];
                 data += std::to_string(the_data);
                 counter[0]+=1;
+                // add if the_data greater 32767, turn on the negative sign flag
+                // if (the_data > 32767){
+                //     flag_bits_flip_s(flag_bits::s);
+                // }
                 general_purpose_registers[get_grp(s_reg)] = the_data;
                 return  nmemonics::umap.at(input) + " " + s_reg + ", " + data;
             }
@@ -538,17 +557,20 @@ string left_and_right_encoding(u8 champiArray[], u8 counter[])
                     // ----
                     if (destination) {
                         general_purpose_registers[get_grp(s_reg)] -= general_purpose_registers[get_grp(s_rm)];
-                        // if( general_purpose_registers[get_grp(s_reg)] == 0 ){
-                        //     general_purpose_registers[fl]+=0b10000000;
-                        //     // flag_bits_flip_s();
-                        // }
+                        if( general_purpose_registers[get_grp(s_reg)] == 0){
+                            // flag_bits_flip(general_purpose_registers[get_grp(s_reg)] == 0, z_masker);
+                            flag_bits_flip(flag_bits::z);
+                        }
+                        else if( general_purpose_registers[get_grp(s_reg)] ){ // for negatives
+                            // maybe get the result of bx, cx directly. compare it there
+                        }
+                        // for positives, nothing yet
                         return nmemonics::umap.at(input) + " " + s_reg + ", " + s_rm;
                     }
                     general_purpose_registers[get_grp(s_rm)] -= general_purpose_registers[get_grp(s_reg)];
-                    // if( general_purpose_registers[get_grp(s_rm)] == 0 ){
-                    //     general_purpose_registers[fl]+=0b10000000;
-                    //     // flag_bits_flip_s();
-                    // }
+                    // flag_bits_flip(general_purpose_registers[get_grp(s_rm)] == 0, z_masker);
+                    flag_bits_flip(flag_bits::z);
+                    // general_purpose_registers[fl]+=z_masker;
                     return nmemonics::umap.at(input) + " " + s_rm + ", " + s_reg;
                 } break;
                 case 0b01: {
@@ -752,11 +774,11 @@ int main(int argc, char **argv)
         tujtuj[0]+=1;
     }
     // u16 temp = general_purpose_registers[fl] + 128;
-    // general_purpose_registers[fl] += 128;
+    // general_purpose_registers[fl] += 0b10000000;
     // general_purpose_registers[fl] = general_purpose_registers[fl]  >> (s-1);
 
     printf("flag register: %d\n", general_purpose_registers[fl]);
-    // printf("kdsakadskdas: %d", 0b1 << 3);
+    // printf("kdsakadskdas: %d", 0b10000000 >> 7);
 
     return 0;
 

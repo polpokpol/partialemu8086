@@ -81,3 +81,16 @@ std::unordered_map<std::string, int> nmemonics::grp_map = {
     {"es", 11},
     {"fl", 12},
 };
+
+
+std::unordered_map<int, int> nmemonics::flag_bits_masker = {
+    {4, 0b100000000000},
+    {5, 0b10000000000},
+    {6, 0b1000000000},
+    {7, 0b100000000},
+    {8, 0b10000000},
+    {9, 0b1000000},
+    {11, 0b10000},
+    {13, 0b100},
+    {15, 0b1},
+};

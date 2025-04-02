@@ -25,6 +25,7 @@ struct nmemonics {
     //
     static std::unordered_map<std::string, int> grp_map;
 
+    static std::unordered_map<int, int> flag_bits_masker;
 };
 
 
