@@ -54,15 +54,15 @@ void flip_and_or_zero_sign(u8 n = 21){
         case 8: {
             u16 temp_the_masker = nmemonics::flag_bits_masker.at(flag_bits::z);
             u8 temp_shifter = flag_bits::z - 1;
-            bool zero_result = (general_purpose_registers[flag_bits::z] & temp_the_masker ) >> temp_shifter;
+            bool zero_result = (general_purpose_registers[fl] & temp_the_masker ) >> temp_shifter;
             if( zero_result != 0) {
-                general_purpose_registers[fl]-=temp_the_masker;
-            }
+                general_purpose_registers[fl]-=temp_the_masker; }
+
         }break;
         case 9: {
             u16 temp_the_masker = nmemonics::flag_bits_masker.at(flag_bits::s);
             u16 temp_shifter = flag_bits::s - 1;
-            u8 sub_result = (general_purpose_registers[flag_bits::s] & temp_the_masker ) >> temp_shifter;
+            bool sub_result = (general_purpose_registers[fl] & temp_the_masker ) >> temp_shifter;
             if( sub_result != 0) {
                 general_purpose_registers[fl]-=temp_the_masker; }
             
@@ -70,35 +70,23 @@ void flip_and_or_zero_sign(u8 n = 21){
         default: {
             u16 temp_the_masker = nmemonics::flag_bits_masker.at(flag_bits::z);
             u8 temp_shifter = flag_bits::z - 1;
-            bool zero_result = (general_purpose_registers[flag_bits::z] & temp_the_masker ) >> temp_shifter;
+            bool zero_result = (general_purpose_registers[fl] & temp_the_masker ) >> temp_shifter;
             if( zero_result != 0) {
-                general_purpose_registers[fl]-=temp_the_masker;
-            }
+                general_purpose_registers[fl]-=temp_the_masker; }
 
             temp_the_masker = nmemonics::flag_bits_masker.at(flag_bits::s);
             temp_shifter = flag_bits::s - 1;
-            u8 sub_result = (general_purpose_registers[flag_bits::s] & temp_the_masker ) >> temp_shifter;
+            bool sub_result = (general_purpose_registers[fl] & temp_the_masker ) >> temp_shifter;
             if( sub_result != 0) {
                 general_purpose_registers[fl]-=temp_the_masker; }
         } break;
+
     };
 }
 
 
 void flag_bits_flip(u16 operation_result[])
 {   
-    // in the future we can go switch case if we lazy
-    // because sometimes we can go double negative or double zero
-    // atleast edit add, cmp and sub
-    // for now, if not zero zero flag will be set to 0b0
-    // same with sign flag. for example if op_result is positive. sign and zero
-    // will be set to 0b0. 
-    // if the result is zero, sign will be 0b0, if result is sign zero will be 0b0
-
-
-    
-
-
     u8 masker;
     // negatives
     if(operation_result[0] > 32767){
@@ -110,33 +98,13 @@ void flag_bits_flip(u16 operation_result[])
     }
     // positives
     else{
-        u16 temp_the_masker = nmemonics::flag_bits_masker.at(flag_bits::z);
-        u8 temp_shifter = flag_bits::z - 1;
-        bool zero_result = (general_purpose_registers[flag_bits::z] & temp_the_masker ) >> temp_shifter;
-
+        flip_and_or_zero_sign();
         return;
     }
+    flip_and_or_zero_sign(masker);
     u16 the_masker = nmemonics::flag_bits_masker.at(masker);
     u8 shifter = masker - 1;
     u16 result = (general_purpose_registers[fl] & the_masker) >> shifter;
-
-
-
-
-    // this line is temporary, we might shove it up in switch statements later
-    if(masker == flag_bits::z && result == 0){return;}
-    else{
-        bool zero_result = (general_purpose_registers[flag_bits::z] & the_masker) >> shifter;
-        if(zero_result){
-            general_purpose_registers[flag_bits::z]+=nmemonics::flag_bits_masker.at(flag_bits::z);
-        }
-    }
-
-    if(masker == flag_bits::s && result == 1){
-        return;
-    }
-
-
 
     // adder
     if( result == 0 ) {
@@ -146,7 +114,7 @@ void flag_bits_flip(u16 operation_result[])
     }
     // minuser
     else if( result != 0 ){
-        general_purpose_registers[fl]-=the_masker;
+        // general_purpose_registers[fl]-=the_masker;
         return;
     }
 }
@@ -391,10 +359,6 @@ string left_and_right_encoding(u8 champiArray[], u8 counter[])
                 u16 the_data = (champiArray[index+2] << 8) + champiArray[index + 1];
                 data += std::to_string(the_data);
                 counter[0]+=1;
-                // add if the_data greater 32767, turn on the negative sign flag
-                // if (the_data > 32767){
-                //     flag_bits_flip_s(flag_bits::s);
-                // }
                 general_purpose_registers[get_grp(s_reg)] = the_data;
                 return  nmemonics::umap.at(input) + " " + s_reg + ", " + data;
             }
@@ -645,21 +609,11 @@ string left_and_right_encoding(u8 champiArray[], u8 counter[])
                     // ----
                     if (destination) {
                         general_purpose_registers[get_grp(s_reg)] -= general_purpose_registers[get_grp(s_rm)];
-                        // if( general_purpose_registers[get_grp(s_reg)] == 0){
-                        //     // flag_bits_flip(general_purpose_registers[get_grp(s_reg)] == 0, z_masker);
-                        //     flag_bits_flip(flag_bits::z);
-                        // }
-                        // else if( general_purpose_registers[get_grp(s_reg)] ){ // for negatives
-                        //     // maybe get the result of bx, cx directly. compare it there
-                        // }
-                        // // for positives, nothing yet
                         flag_bits_flip(&general_purpose_registers[get_grp(s_reg)]);
                         return nmemonics::umap.at(input) + " " + s_reg + ", " + s_rm;
                     }
                     general_purpose_registers[get_grp(s_rm)] -= general_purpose_registers[get_grp(s_reg)];
-                    // flag_bits_flip(general_purpose_registers[get_grp(s_rm)] == 0, z_masker);
                     flag_bits_flip(&general_purpose_registers[get_grp(s_rm)]);
-                    // general_purpose_registers[fl]+=z_masker;
                     return nmemonics::umap.at(input) + " " + s_rm + ", " + s_reg;
                 } break;
                 case 0b01: {
@@ -724,8 +678,13 @@ string left_and_right_encoding(u8 champiArray[], u8 counter[])
                     }
                     // ----
                     if (destination) {
+                        u16 temp_ope = general_purpose_registers[get_grp(s_reg)] - general_purpose_registers[get_grp(s_rm)];
+                        flag_bits_flip(&temp_ope);
                         return nmemonics::umap.at(input) + " " + s_reg + ", " + s_rm;
                     }
+                    u16 temp_ope = general_purpose_registers[get_grp(s_rm)] - general_purpose_registers[get_grp(s_reg)];
+                    flag_bits_flip(&temp_ope);
+                    // string kool = _transform_int_to_string(temp_ope);
                     return nmemonics::umap.at(input) + " " + s_rm + ", " + s_reg;
                 } break;
                 case 0b01: {
@@ -834,7 +793,8 @@ int main(int argc, char **argv)
     // 0x39,0x5e,0x00,0x39,0x4f,0x02,0x38,0x7a,0x04,0x39,0x7b,0x06,0x80,0x3f,0x22,0x83,0x3e,0xe2,0x12,0x1d,
     // 0x3b,0x46,0x00,0x3a,0x00,0x39,0xd8,0x38,0xe0,0x3d,0xe8,0x03,0x3c,0xe2,0x3c,0x09,0x75,0x02,0x75,0xfc};
     //   0x75,0xfa,0x75,0xfc,0x74,0xfe,0x7c,0xfc,0x7e,0xfa,0x72,0xf8,0x76,0xf6,0x7a,0xf4,0x70,0xf2,0x78,0xf0,0x75,0xee,0x7d,0xec,0x7f,0xea,0x73,0xe8,0x77,0xe6,0x7b,0xe4,0x71,0xe2,0x79,0xe0,0xe2,0xde,0xe1,0xdc,0xe0,0xda,0xe3,0xd8
-    u8 champiHex[] = {0xbb,0x03,0xf0,0xb9,0x01,0x0f,0x29, 0xcb };
+    u8 champiHex[] = {0xbb,0x03,0xf0,0xb9,0x01,0x0f,0x29, 0xcb,0xbc,0xe6,0x03,0xbd,0xe7,0x03,
+        0x39,0xe5};
     // u8 champiHex[] = { 0xb8, 0x01, 0x00, 0xbb, 0x02, 0x00, 0xb9, 0x03, 0x00, 0xba,
     //         0x04, 0x00, 0x89, 0xc4, 0x89, 0xdd, 0x89, 0xce, 0x89, 0xd7, 0x89, 0xe2, 0x89, 0xe9, 0x89, 0xf3, 0x89, 0xf8};
 
