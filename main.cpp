@@ -1,5 +1,6 @@
 #include <cstddef>
 #include <iostream>
+#include <ostream>
 #include <string>
 #include <stdio.h>
 #include "nmemonics.h"
@@ -34,13 +35,17 @@ u16 general_purpose_registers[16]; // 12 is the flag
 
 string byte_or_word(bool wide){if(wide){return "word";} return "byte";}
 string _nmemonics_result_get(u8 input, u8 input_modifier=255){
-    string result = nmemonics::umap.at(input) + " ";
+    string result = nmemonics::umap.at(input);
     if(input_modifier == 0b101){
-        string result = nmemonics::umap.at(0b001010) + " ";
+        string result = nmemonics::umap.at(0b001010);
+        return result;
+    }
+    else if(input_modifier==0b0){
+        string result = nmemonics::umap.at(0b0);
         return result;
     }
     else if(input_modifier == 0b111){
-        string result = nmemonics::umap.at(0b001110) + " ";
+        string result = nmemonics::umap.at(0b001110);
         return result;
     }
     return result;
@@ -440,7 +445,7 @@ string left_and_right_encoding(u8 champiArray[], u8 counter[])
 
             // right encoding
             u8 input2 = champiArray[index + 1];
-            u8 input_modifier = (0b00111000 & input2) >> 3; // not reg. this is for add, sub and others
+            u16 input_modifier = (0b00111000 & input2) >> 3; // not reg. this is for add, sub and others
             u8 input_mod = (0b11000000 & input2) >> 6; // not yet implemented
             u8 input_rm = (0b00000111 & input2);
             string nmemonics_result = _nmemonics_result_get(input, input_modifier);
@@ -448,15 +453,35 @@ string left_and_right_encoding(u8 champiArray[], u8 counter[])
             string s_rm = "";
             switch (input_mod) {
                 case 0b11: {
+                    counter[0] += 1;
                     string stringified_integer_data0 = "";
-                    u16 integer_summation = champiArray[index + 2];
-                    stringified_integer_data0 = _transform_int_to_string(integer_summation);
-                    s_rm += nmemonics::umap11_wide.at(input_rm) + ", " + stringified_integer_data0;
+                    if(wide){
+                        s_rm += nmemonics::umap11_wide.at(input_rm);
+                        u16 integer_summation = (champiArray[index + 3] << 8) ^ champiArray[index + 2];
+                        stringified_integer_data0 = _transform_int_to_string(integer_summation);
 
+                        // temporary as our example only have sub and add, if many we will make more
+
+                        if(nmemonics_result == "sub"){
+                            // cout << "adsdsa: sub " << input_modifier << endl;
+                            general_purpose_registers[get_grp(s_rm)] -= integer_summation;
+                        }else{
+                            // cout << "adsdsa: add " << nmemonics_result << endl;
+                            general_purpose_registers[get_grp(s_rm)] += integer_summation;
+                        }
+                        // ---------------------------------------------------------------------
+
+                        flag_bits_flip(&general_purpose_registers[get_grp(s_rm)]);
+                        
+                        counter[0]+=1;
+                    }else{
+                        u16 integer_summation = champiArray[index + 2];
+                        stringified_integer_data0 = _transform_int_to_string(integer_summation);
+                    }
+                    s_rm += ", " + stringified_integer_data0;
                     string s_rm_result = s_rm;// we may add if needed later
                     string result_0b00 = "";
-                    result_0b00 = nmemonics_result + s_rm_result;
-                    counter[0] += 1;
+                    result_0b00 = nmemonics_result + " " + s_rm_result;
                     return result_0b00;
                 }break;
                 case 0b10: {
@@ -794,7 +819,8 @@ int main(int argc, char **argv)
     // 0x3b,0x46,0x00,0x3a,0x00,0x39,0xd8,0x38,0xe0,0x3d,0xe8,0x03,0x3c,0xe2,0x3c,0x09,0x75,0x02,0x75,0xfc};
     //   0x75,0xfa,0x75,0xfc,0x74,0xfe,0x7c,0xfc,0x7e,0xfa,0x72,0xf8,0x76,0xf6,0x7a,0xf4,0x70,0xf2,0x78,0xf0,0x75,0xee,0x7d,0xec,0x7f,0xea,0x73,0xe8,0x77,0xe6,0x7b,0xe4,0x71,0xe2,0x79,0xe0,0xe2,0xde,0xe1,0xdc,0xe0,0xda,0xe3,0xd8
     u8 champiHex[] = {0xbb,0x03,0xf0,0xb9,0x01,0x0f,0x29, 0xcb,0xbc,0xe6,0x03,0xbd,0xe7,0x03,
-        0x39,0xe5};
+        0x39,0xe5,0x81,0xc5,0x03,0x04,0x81,0xed,0xea,0x07};
+        // u8 champiHex[] = {0x81,0xed,0xea,0x07 };
     // u8 champiHex[] = { 0xb8, 0x01, 0x00, 0xbb, 0x02, 0x00, 0xb9, 0x03, 0x00, 0xba,
     //         0x04, 0x00, 0x89, 0xc4, 0x89, 0xdd, 0x89, 0xce, 0x89, 0xd7, 0x89, 0xe2, 0x89, 0xe9, 0x89, 0xf3, 0x89, 0xf8};
 
@@ -827,7 +853,7 @@ int main(int argc, char **argv)
     // general_purpose_registers[fl] = general_purpose_registers[fl]  >> (s-1);
 
     printf("flag register: %d\n", general_purpose_registers[fl]);
-    // printf("kdsakadskdas: %d", 0b10000000 >> 7);
+    // printf("kdsakadskdas: %d", 0b1000000000000000 >> 15);
 
     return 0;
 
